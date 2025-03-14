@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symptom Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .list-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-left: 0;
+            flex-direction: row;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 300px;
+            height: 100px;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            margin-right: 10px;
+            position: relative;
+        }
+        .btn-light, .btn-edit {
+            width: 70px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+
+<body class="container mt-5">
+    <h2 class="text-center mb-5">Symptom Tracker</h2>
+
+    <!-- input field for adding new symptoms -->
+    <div class="mb-3">
+        <input type="text" id="entryInput" class="form-control" placeholder="Enter symptom...">
+    </div>
+
+    <!-- add button to submit a new symptom -->
+    <button class="btn btn-primary" onclick="addEntry()">Add</button>
+
+    <!-- list container for displaying symptoms -->
+    <ul id="entriesList" class="list-group mt-3"></ul>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/entries/";
+
+        // gets symptoms from the backend and updates the UI
+        async function fetchEntries() {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            const list = document.getElementById("entriesList");
+            list.innerHTML = "";
+
+            data.forEach(entry => {
+                const li = document.createElement("li");
+                li.className = "list-group-item";
+                li.id = `entry-${entry.id}`;
+                li.innerHTML = `
+                    <span id="desc-${entry.id}">${entry.description}</span>
+                    <input type="text" id="edit-input-${entry.id}" class="form-control d-none" value="${entry.description}">
+                    <button class="btn btn-light btn-sm btn-edit" onclick="editEntry(${entry.id})">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteEntry(${entry.id})">Delete</button>
+                `;
+                console.log(`Loaded entry: ID=${entry.id}, Description="${entry.description}"`);
+                list.appendChild(li);
+            });
+        }
+
+
+        // adds a new symptom entry by sending a POST request to the backend
+        async function addEntry() {
+            const input = document.getElementById("entryInput");
+            const description = input.value.trim();
+            if (!description) return;
+            await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "issue_type": "Medical", "description": description })
+            });
+            input.value = "";
+            fetchEntries();
+        }
+
+        // deletes symptom by id
+        async function deleteEntry(id) {
+            await fetch(`${API_URL}${id}`, { method: "DELETE" });
+            fetchEntries();
+        }
+
+        // toggles between edit mode and save mode for a symptom entry
+        function editEntry(id) {
+            const desc = document.getElementById(`desc-${id}`);
+            const input = document.getElementById(`edit-input-${id}`);
+            const editButton = document.querySelector(`#entry-${id} .btn-edit`);
+            
+            if (input.classList.contains("d-none")) {
+                input.classList.remove("d-none");
+                desc.classList.add("d-none");
+                editButton.textContent = "Save";
+            } else {
+                updateEntry(id, input.value);
+            }
+        }
+
+        // updates a symptom entry by sending a PUT request 
+        async function updateEntry(id, newText) {
+            await fetch(`${API_URL}${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "description": newText })
+            });
+            fetchEntries();
+        }
+
+        fetchEntries();
+    </script>
+</body>
+</html>
