@@ -2,7 +2,10 @@
 
 ## Demo
 
-![Symptom Tracking App Demo](SymptomTracker.mp4)
+
+https://github.com/user-attachments/assets/2ada8378-47fc-43ec-8756-4a7822e194a2
+
+
 
 **NOTE: The *Edit* button is not working correctly. I am acknowledging that error.**
 
